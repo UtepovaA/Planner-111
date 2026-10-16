@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Путешествие по городам: время и бюджет</title>
+<style>
+:root{--bg:#f6f2e9;--card:#fff;--tx:#1c2a23;--mu:#5f6d65;--g:#1f5c43;--gl:#e2eee7;--o:#d9631c;--ob:#fff;--bd:#e3dcc9;--w:#fff1cf;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#16201a;--card:#1f2b24;--tx:#edf2ee;--mu:#a1b1a7;--g:#7fcf9f;--gl:#2a3d32;--o:#e8772e;--ob:#1a1208;--bd:#33463b;--w:#3b3216}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:960px;margin:0 auto;padding:16px}h1{color:var(--g);margin:.2em 0}h2{color:var(--g);font-size:1.2rem;margin:.2em 0 .5em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:10px 0}
+.g{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:flex;flex-direction:column;font-size:.82rem;color:var(--mu);gap:3px}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:9px;min-height:44px;width:100%}
+button,a.b{font:inherit;cursor:pointer;border:1px solid var(--g);background:transparent;color:var(--g);border-radius:12px;padding:8px 14px;min-height:42px;text-decoration:none;display:inline-flex;align-items:center}
+button.p{background:var(--o);border-color:var(--o);color:var(--ob);font-weight:600}button.d{border-color:#b3261e;color:#b3261e}button.s,a.s{min-height:34px;padding:4px 10px;font-size:.9rem}button:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:3px solid var(--o);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+.mu{color:var(--mu);font-size:.9rem}.big{font-size:1.5rem;font-weight:700;color:var(--g)}
+.warn{background:var(--w);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:.92rem}
+.tl{border-left:3px solid var(--g);margin-left:9px;padding-left:24px}.tl>.card{position:relative}.tl>.card:before{content:"";position:absolute;left:-36px;top:18px;width:16px;height:16px;border-radius:50%;background:var(--o);border:3px solid var(--bg)}
+.seg{background:var(--gl);border-radius:12px;padding:10px;margin:4px 0 4px}
+table{width:100%;border-collapse:collapse}td{padding:7px 4px;border-bottom:1px solid var(--bd)}td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+</style></head><body><main>
+<h1>🧭 Путешествие по городам</h1>
+<p class="mu">Добавьте города по порядку, укажите расстояния — получите время в пути, расход бензина, проживание, питание и общий бюджет. Данные хранятся в этом браузере.</p>
+<section class="card"><h2>Параметры поездки</h2><div class="g">
+<label>Дата выезда<input type="date" id="start"></label><label>Время выезда<input type="time" id="stime"></label>
+<label>Путешественников<input type="number" id="pax" min="1" step="1"></label><label>Номеров<input type="number" id="rooms" min="1" step="1"></label>
+<label>Валюта<select id="cur"><option>₸</option><option>₽</option><option>$</option><option>€</option></select></label>
+<label>Расход, л/100 км<input type="number" id="cons" min="0" step="any"></label><label>Поправка к расходу, % (груз, горы, кондиционер, зима)<input type="number" id="fcorr" min="0" max="100" step="any"></label><label>Цена литра<input type="number" id="price" min="0" step="any"></label>
+<label>Средняя скорость, км/ч<input type="number" id="speed" min="1" step="any"></label>
+<label>Ночь в отеле (за номер)<input type="number" id="hotel" min="0" step="any"></label><label>Питание, на человека в день<input type="number" id="food" min="0" step="any"></label>
+<label>Прочее (платные дороги и т.д.)<input type="number" id="other" min="0" step="any"></label><label>Резерв, %<input type="number" id="resv" min="0" step="any"></label></div></section>
+<h2>Маршрут</h2><div id="route"></div>
+<div class="row"><button class="p" data-a="add">＋ Добавить город</button><button class="d" data-a="reset">Сбросить всё</button></div>
+<h2 style="margin-top:18px">Итоги</h2><div id="res"></div>
+<p class="mu">Расстояния «ориентир» — приблизительные, подставляются для некоторых пар городов и могут отличаться от реального маршрута: проверяйте их в навигаторе. Время считается как расстояние ÷ средняя скорость.</p>
+</main>
+<datalist id="cities"><option value="Алматы"><option value="Астана"><option value="Шымкент"><option value="Караганда"><option value="Тараз"><option value="Талдыкорган"><option value="Семей"><option value="Аягоз"><option value="Павлодар"><option value="Усть-Каменогорск"><option value="Туркестан"><option value="Кокшетау"><option value="Костанай"><option value="Актобе"><option value="Бишкек"><option value="Ташкент"></datalist>
+<script>
+const K='city_budget_v1',$=s=>document.querySelector(s),uid=()=>Math.random().toString(36).slice(2,8),
+esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
+num=v=>v===''||v==null||isNaN(+v)?0:Math.max(0,+v);
+const D0=()=>({start:'',stime:'08:00',pax:2,rooms:1,cur:'₸',cons:'',fcorr:0,price:'',speed:70,hotel:'',food:'',other:'',resv:10,cities:[{id:uid(),name:'',nights:0,hotel:''},{id:uid(),name:'',nights:0,hotel:''}],km:{}});
+let S=D0();try{const d=JSON.parse(localStorage.getItem(K));if(d&&Array.isArray(d.cities))S=Object.assign(D0(),d)}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+// Ориентировочные расстояния по дорогам (км), только для подсказки
+const AP={'Алматы|Астана':1250,'Алматы|Шымкент':690,'Алматы|Талдыкорган':270,'Алматы|Тараз':480,'Алматы|Бишкек':240,'Астана|Караганда':215,'Астана|Кокшетау':290,'Астана|Костанай':800,'Шымкент|Туркестан':160,'Шымкент|Тараз':160,'Алматы|Караганда':1000};
+const sug=(a,b)=>{a=a.trim();b=b.trim();return AP[a+'|'+b]||AP[b+'|'+a]||0};
+const fm=v=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0}).format(v)+' '+S.cur,
+du=h=>{const m=Math.round(h*60);return(Math.floor(m/60)?Math.floor(m/60)+' ч ':'')+(m%60?m%60+' мин':m<60?'0 мин':'')},
+mapd=(a,b)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(a)+'&destination='+encodeURIComponent(b),
+dt=d=>d.toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+['start','stime','pax','rooms','cur','cons','fcorr','price','speed','hotel','food','other','resv'].forEach(k=>{$('#'+k).value=S[k]});
+function route(){const C=S.cities;let h='<div class="tl">';
+C.forEach((c,i)=>{h+=`<div class="card"><div class="row sp"><b>${i+1}. ${esc(c.name||'Новый город')}</b><div class="row"><button class="s" data-a="up" data-i="${c.id}" ${i?'':'disabled'} aria-label="Выше">Выше</button><button class="s" data-a="dn" data-i="${c.id}" ${i<C.length-1?'':'disabled'} aria-label="Ниже">Ниже</button><button class="d s" data-a="del" data-i="${c.id}" ${C.length>2?'':'disabled'}>Удалить</button></div></div>
+<div class="g" style="margin-top:8px"><label>Город<input list="cities" autocomplete="off" data-c="${c.id}.name" value="${esc(c.name)}"></label><label>Ночей в этом городе<input type="number" min="0" step="1" data-c="${c.id}.nights" value="${c.nights}"></label><label>Ночь в отеле, если иначе<input type="number" min="0" step="any" data-c="${c.id}.hotel" value="${esc(c.hotel)}" placeholder="как в параметрах"></label><label>Фактическое время проезда<input type="datetime-local" data-c="${c.id}.fact" value="${esc(c.fact||'')}"></label></div><div class="row" style="margin-top:8px"><button class="s" data-a="now" data-i="${c.id}">⏱ Отметить сейчас</button>${c.fact?`<button class="s" data-a="clr" data-i="${c.id}">Очистить время</button>`:''}</div></div>`;
+if(i<C.length-1){const n=C[i+1],key=c.id+'>'+n.id,km=S.km[key],sg=sug(c.name,n.name);
+h+=`<div class="seg"><div class="row sp"><b>${esc(c.name||'…')} → ${esc(n.name||'…')}</b><span class="mu" data-t="${key}"></span></div><div class="row" style="margin-top:6px"><label style="flex:1;min-width:140px">Расстояние, км<input type="number" min="0" step="any" data-k="${key}" value="${km??''}"></label>
+${(km===undefined||km==='')&&sg?`<button class="s" data-a="sug" data-i="${key}" data-v="${sg}">Подставить ориентир ~${sg} км</button>`:''}${c.name&&n.name?`<a class="b s" target="_blank" rel="noopener" href="${mapd(c.name,n.name)}">Построить маршрут</a>`:''}</div></div>`}});
+$('#route').innerHTML=h+'</div>'}
+function res(){const C=S.cities,pax=Math.max(1,parseInt(S.pax)||1),rooms=Math.max(1,parseInt(S.rooms)||1),sp=num(S.speed)||1;
+let km=0,hrs=0,miss=0,nights=0,lodg=0,warn=[],tl='';const plan=[];let t=S.start?new Date(S.start+'T'+(S.stime||'08:00')):null;const t0=t&&new Date(t);if(t0)plan[0]=new Date(t0);if(t)t=new Date(+t+Math.floor(num(C[0].nights))*864e5);
+C.forEach((c,i)=>{const n=Math.floor(num(c.nights));nights+=n;lodg+=n*num(c.hotel===''?S.hotel:c.hotel)*rooms;
+if(i<C.length-1){const key=c.id+'>'+C[i+1].id,v=S.km[key];if(v===undefined||v==='')miss++;const k=num(v),h=k/sp;km+=k;hrs+=h;
+const el=document.querySelector(`[data-t="${key}"]`);if(el)el.textContent=k?`≈ ${du(h)} в пути`:'';
+if(h>10)warn.push(`Переезд ${c.name||i+1} → ${C[i+1].name||i+2} занимает ${du(h)} — стоит запланировать ночёвку в пути.`);
+if(t){t=new Date(+t+h*36e5);plan[i+1]=new Date(t);tl+=`<tr><td>Прибытие: ${esc(C[i+1].name||'город '+(i+2))}</td><td>${dt(t)}</td></tr>`;t=new Date(+t+num(C[i+1].nights)*864e5)}}});
+const sd=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()),days=t0?Math.max(1,Math.round((+sd(t)-+sd(t0))/864e5)+1):Math.max(1,nights+Math.ceil(hrs/10)+1),
+ec=num(S.cons)*(1+Math.min(100,num(S.fcorr))/100),L=km*ec/100,fuel=L*num(S.price),food=days*pax*num(S.food),oth=num(S.other),sub=fuel+lodg+food+oth,rv=sub*num(S.resv)/100,tot=sub+rv;
+const fl=C.map((c,i)=>c.fact?{n:c.name||'город '+(i+1),f:new Date(c.fact),p:plan[i]}:null).filter(Boolean);if(miss)warn.push(`Расстояние указано не для всех участков (не хватает: ${miss}) — расчёт неполный.`);
+if(!num(S.cons)||!num(S.price))warn.push('Укажите расход топлива и цену литра, чтобы посчитать бензин.');
+if(!num(S.hotel)&&nights)warn.push('Не указана цена ночи в отеле.');if(!num(S.food))warn.push('Не указано питание на человека в день.');
+if(!S.start)warn.push('Укажите дату выезда, чтобы увидеть даты прибытия в города.');
+$('#res').innerHTML=`${warn.map(w=>`<div class="warn">⚠ ${w}</div>`).join('')}
+<div class="g"><div class="card"><div class="mu">Расстояние</div><div class="big">${Math.round(km)} км</div></div><div class="card"><div class="mu">Время в пути</div><div class="big">${du(hrs)}</div></div><div class="card"><div class="mu">Бензин</div><div class="big">${Math.round(L)} л</div></div><div class="card"><div class="mu">Дней в поездке</div><div class="big">${days}</div></div></div>
+<div class="card"><table><tr><td>Бензин (${ec.toFixed(1)} л/100 км${num(S.fcorr)?' с поправкой':''})</td><td>${fm(fuel)}</td></tr><tr><td>Проживание (${nights} ноч., ${rooms} ном.)</td><td>${fm(lodg)}</td></tr><tr><td>Питание (${days} дн. × ${pax} чел.)</td><td>${fm(food)}</td></tr><tr><td>Прочее</td><td>${fm(oth)}</td></tr>
+<tr><td><b>Без резерва</b></td><td><b>${fm(sub)}</b></td></tr><tr><td>Резерв ${num(S.resv)}%</td><td>${fm(rv)}</td></tr><tr><td><b>Итого</b></td><td class="big">${fm(tot)}</td></tr><tr><td>На одного человека</td><td>${fm(tot/pax)}</td></tr></table></div>
+${tl?`<div class="card"><h2>Когда приезжаем</h2><table>${tl}</table><div class="mu">Без учёта остановок и пробок; ночёвки считаются по числу ночей в городе.</div></div>`:''}
+${fl.length?`<div class="card"><h2>Фактическое время проезда</h2><table>${fl.map(x=>{const d=x.p?Math.round((x.f-x.p)/6e4):null;return`<tr><td>${esc(x.n)}</td><td>${dt(x.f)}${d===null?'':` · ${d===0?'по плану':d>0?'позже плана на '+du(d/60):'раньше плана на '+du(-d/60)}`}</td></tr>`}).join('')}</table></div>`:''}`}
+document.addEventListener('input',e=>{const el=e.target;
+if(el.id&&el.id in S){S[el.id]=el.type==='number'?(el.value===''?'':Math.max(0,+el.value)):el.value}
+else if(el.dataset.c){const[id,f]=el.dataset.c.split('.'),c=S.cities.find(x=>x.id===id);c[f]=el.type==='number'?(el.value===''?'':Math.max(0,+el.value)):el.value}
+else if(el.dataset.k){S.km[el.dataset.k]=el.value===''?'':Math.max(0,+el.value)}else return;save();res()});
+document.addEventListener('change',e=>{if(e.target.dataset.c&&e.target.dataset.c.endsWith('.name')){route();res()}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,i=b.dataset.i,C=S.cities,k=C.findIndex(x=>x.id===i);
+if(a==='add')C.push({id:uid(),name:'',nights:0,hotel:''});else if(a==='del'){if(C.length>2)C.splice(k,1)}
+else if(a==='up'||a==='dn'){const j=a==='up'?k-1:k+1;if(j>=0&&j<C.length)[C[k],C[j]]=[C[j],C[k]]}
+else if(a==='now'){C[k].fact=new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16)}else if(a==='clr'){C[k].fact=''}else if(a==='sug')S.km[i]=+b.dataset.v;else if(a==='reset'){if(confirm('Сбросить все данные?'))S=D0();else return;Object.keys(S).forEach(x=>{const f=$('#'+x);if(f)f.value=S[x]})}
+save();route();res()});
+route();res();
+</script></body></html>
